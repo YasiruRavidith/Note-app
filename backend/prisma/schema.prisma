@@ -1,0 +1,38 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===================================
+//  DATA MODELS
+// ===================================
+
+model User {
+  id        String   @id @default(cuid()) // A unique ID like "clw8u..."
+  googleId  String   @unique // The unique ID from Google
+  email     String   @unique
+  name      String
+  avatarUrl String? // The question mark makes this optional
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes Note[] // A user can have many notes
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation to the User model
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String
+}
