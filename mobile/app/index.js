@@ -45,6 +45,15 @@ const LoginPage = () => {
       await GoogleSignin.hasPlayServices();
       console.log('✅ Google Play Services available');
 
+      // Sign out any existing user first to force account picker
+      try {
+        await GoogleSignin.signOut();
+        console.log('🔄 Signed out previous user to force account picker');
+      } catch (_signOutError) {
+        // It's okay if there's no user to sign out
+        console.log('ℹ️ No previous user to sign out');
+      }
+
       // This opens the native Android account picker UI.
       const userInfo = await GoogleSignin.signIn();
       console.log('📱 Full sign-in response:', JSON.stringify(userInfo, null, 2));
