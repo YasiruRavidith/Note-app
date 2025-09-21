@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import axiosClient from '../api/axiosClient';
 import EditNoteModal from '../components/EditNoteModal';
 import { io } from 'socket.io-client'; // <-- NEW: Import io
+import { SOCKET_URL } from '../config/endpoints';
 
 // NEW: Establish the socket connection outside of the component
 // This prevents it from reconnecting on every re-render
-const socket = io('http://localhost:3001');
+const socket = io(SOCKET_URL);
 
 const HomePage = () => {
   const [notes, setNotes] = useState([]);

@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "mobile",
+    "scheme": "mynotesapp",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "comyasirnotesapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -20,7 +20,8 @@
       },
       "package": "com.yasir.notesapp",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -40,6 +41,7 @@
           }
         }
       ],
+      "@react-native-google-signin/google-signin",
       "expo-web-browser",
       "expo-secure-store"
     ],

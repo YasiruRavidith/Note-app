@@ -1,16 +1,15 @@
 // mobile/app/_layout.js
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+// ...
 
 export default function RootLayout() {
   return (
     <>
-      <Stack>
+      <Stack initialRouteName="home"> {/* <-- TELL IT TO START HERE */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        {/* Add the home screen here */}
-        <Stack.Screen name="home" options={{ headerTitle: 'My Notes', headerBackVisible: false }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} /> {/* We made our own header */}
       </Stack>
-      <StatusBar style="light" />
+      {/* ... */}
     </>
   );
 }

@@ -21,7 +21,11 @@ const httpServer = http.createServer(app);
 // NEW: Create a Socket.IO server and attach it to the HTTP server
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173", // Allow our frontend to connect
+    origin: [
+      "http://localhost:5173",
+      "http://192.168.1.103:5173",
+      "http://172.17.192.1:5173"
+    ], // Allow our frontend to connect from multiple IPs
     methods: ["GET", "POST"]
   }
 });
@@ -37,11 +41,18 @@ io.on('connection', (socket) => {
 
 
 // ========== MIDDLEWARE ==========
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://192.168.1.103:5173',
+    'http://172.17.192.1:5173'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 const authMiddleware = require('./middleware/authMiddleware');
 
-// ========== AUTH ROUTES (No changes here) ==========
+// ========== AUTH ROUTES ==========
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -82,23 +93,29 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
 
     const sessionToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
-    res.redirect(`http://localhost:5173/auth/callback?token=${sessionToken}`);
+    // Use the request host to redirect back to the correct origin
+    const frontendOrigin = req.get('origin') || `http://localhost:5173`;
+    res.redirect(`${frontendOrigin}/auth/callback?token=${sessionToken}`);
   } catch (error) {
     console.error('Authentication error:', error);
-    res.status(500).redirect('http://localhost:5173/login?error=auth_failed');
+    const frontendOrigin = req.get('origin') || `http://localhost:5173`;
+    res.status(500).redirect(`${frontendOrigin}/login?error=auth_failed`);
   }
 });
 
 app.post('/api/auth/google/mobile', async (req, res) => {
   const { idToken } = req.body; // The token sent from the mobile app
+  
+  console.log('📱 Mobile auth request received');
+  console.log('🔑 ID Token present:', !!idToken);
 
   try {
-    // Verify the token with Google
+    // Verify the token with Google - specify the web client ID as audience
     const ticket = await oAuth2Client.verifyIdToken({
       idToken,
-      // We don't need to specify the audience (client ID) here for mobile
-      // as the token is validated by its signature.
+      audience: process.env.GOOGLE_CLIENT_ID, // Web client ID from Firebase
     });
+    console.log('✅ Token verification successful');
     const payload = ticket.getPayload();
     const googleId = payload.sub;
 

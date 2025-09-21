@@ -1,12 +1,14 @@
 // web/src/pages/LoginPage.jsx
 import React from 'react';
 import axios from 'axios';
+import { OAUTH_BASE_URL } from '../config/endpoints';
 
 const LoginPage = () => {
   const handleLogin = async () => {
     try {
       // Step 1: Ask our backend for the Google Auth URL
-      const res = await axios.get('http://localhost:3001/api/auth/google/url');
+      // Always use localhost for OAuth to avoid private IP restrictions
+      const res = await axios.get(`${OAUTH_BASE_URL}/auth/google/url`);
       const { url } = res.data;
 
       // Step 2: Redirect the user to the Google login page
