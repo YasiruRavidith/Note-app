@@ -10,29 +10,192 @@ datasource db {
 }
 
 // ===================================
-//  DATA MODELS
+//  COMPREHENSIVE DATA MODEL
 // ===================================
 
 model User {
-  id        String   @id @default(cuid()) // A unique ID like "clw8u..."
-  googleId  String   @unique // The unique ID from Google
+  id        String   @id @default(cuid())
+  googleId  String   @unique
   email     String   @unique
   name      String
-  avatarUrl String? // The question mark makes this optional
+  avatarUrl String?
+  
+  // PIN and Security Settings
+  pinHash       String?   // Bcrypt hash of PIN (for UI lock mode)
+  pinSalt       String?   // Salt for client-side encryption (zero-knowledge mode)
+  encryptionMode String  @default("ui_lock") // "ui_lock" or "zero_knowledge"
+  
+  // User preferences
+  settings      Json     @default("{}")
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  notes Note[] // A user can have many notes
+  // Relations
+  notes         Note[]
+  devices       Device[]
+  userAuth      UserAuth?
+  tags          Tag[]
+  collaborations Collaborator[]
+  aiTasks       AiTask[]
+}
+
+model UserAuth {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  refreshToken String?   // Encrypted Google refresh token
+  lastLogin    DateTime?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id           String    @id @default(cuid())
+  userId       String
+  deviceName   String
+  deviceType   String    // "web", "mobile", "desktop"
+  pushToken    String?   // For push notifications
+  sessionToken String?   // For WebSocket authentication
+  lastSeen     DateTime  @default(now())
+  isActive     Boolean   @default(true)
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
 
 model Note {
   id        String   @id @default(cuid())
   title     String
   content   String?
+  
+  // Encryption support
+  contentEncrypted Boolean @default(false)
+  encryptionMeta   Json?   // Salt, IV for client-side encryption
+  
+  // Organization
+  tags      String[] @default([])
+  folderId  String?
+  
+  // Collaboration
+  isShared  Boolean  @default(false)
+  shareCode String? // For public sharing
+  
+  // Versioning
+  version   Int      @default(1)
+  
+  // Soft delete
+  deletedAt DateTime?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relation to the User model
-  owner   User   @relation(fields: [ownerId], references: [id])
-  ownerId String
+  // Relations
+  owner         User           @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  folder        Folder?        @relation(fields: [folderId], references: [id])
+  versions      NoteVersion[]
+  attachments   Attachment[]
+  collaborators Collaborator[]
+  aiTasks       AiTask[]
+  
+  @@index([ownerId])
+  @@index([shareCode])
+}
+
+model Folder {
+  id       String @id @default(cuid())
+  name     String
+  color    String @default("#3B82F6")
+  userId   String
+  parentId String? // For nested folders
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  notes    Note[]
+  parent   Folder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children Folder[] @relation("FolderHierarchy")
+  
+  @@index([userId])
+}
+
+model NoteVersion {
+  id              String   @id @default(cuid())
+  noteId          String
+  contentSnapshot String
+  title           String
+  authorDeviceId  String
+  changesSummary  String?  // What changed in this version
+  
+  createdAt DateTime @default(now())
+  
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  
+  @@index([noteId])
+}
+
+model Collaborator {
+  id     String @id @default(cuid())
+  noteId String
+  userId String
+  role   String @default("viewer") // "viewer", "editor", "owner"
+  
+  createdAt DateTime @default(now())
+  
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([noteId, userId])
+}
+
+model Attachment {
+  id           String  @id @default(cuid())
+  noteId       String
+  fileName     String
+  originalName String
+  s3Key        String  @unique
+  mimeType     String
+  size         Int
+  textExtracted String? // OCR results
+  
+  createdAt DateTime @default(now())
+  
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  
+  @@index([noteId])
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  userId String
+  name   String
+  color  String @default("#10B981")
+  
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, name])
+}
+
+model AiTask {
+  id       String @id @default(cuid())
+  noteId   String?
+  userId   String
+  type     String // "summary", "embedding", "ocr", "tags", "rewrite"
+  status   String @default("pending") // "pending", "processing", "completed", "failed"
+  input    Json   // Input data for the AI task
+  result   Json?  // AI processing results
+  error    String? // Error message if failed
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  note Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
 }

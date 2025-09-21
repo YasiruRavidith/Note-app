@@ -5,11 +5,12 @@ import { Stack } from 'expo-router';
 export default function RootLayout() {
   return (
     <>
-      <Stack initialRouteName="home"> {/* <-- TELL IT TO START HERE */}
+      <Stack initialRouteName="index">
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="home" options={{ headerShown: false }} /> {/* We made our own header */}
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen name="pin-setup" options={{ headerShown: false }} />
+        <Stack.Screen name="pin-unlock" options={{ headerShown: false }} />
       </Stack>
-      {/* ... */}
     </>
   );
 }

@@ -88,9 +88,32 @@ const LoginPage = () => {
       const { token } = backendResponse.data;
       await SecureStore.setItemAsync('authToken', token);
 
-      console.log('🎉 Authentication successful! Navigating to home...');
-      // If everything is successful, navigate to the main app screen.
-      router.replace('/home');
+      console.log('🎉 Authentication successful!');
+      
+      // Check if user needs PIN setup
+      try {
+        const pinStatusResponse = await apiClient.get('/auth/pin/status', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!pinStatusResponse.data.hasPIN) {
+          console.log('📱 Redirecting to PIN setup...');
+          router.replace('/pin-setup');
+        } else {
+          console.log('🔒 PIN configured, checking unlock status...');
+          const isUnlocked = await SecureStore.getItemAsync('appUnlocked');
+          if (isUnlocked === 'true') {
+            console.log('📱 App already unlocked, going to home...');
+            router.replace('/home');
+          } else {
+            console.log('🔐 Need PIN unlock...');
+            router.replace('/pin-unlock');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to check PIN status, going to home:', error);
+        router.replace('/home');
+      }
 
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
