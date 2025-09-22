@@ -193,10 +193,28 @@ const HomePage = () => {
   };
 
   const renderNote = ({ item }) => (
-    <View style={styles.noteCard}>
+    <TouchableOpacity 
+      style={styles.noteCard}
+      onPress={() => router.push({
+        pathname: '/note-edit',
+        params: { 
+          noteId: item.id, 
+          title: item.title, 
+          content: item.content 
+        }
+      })}
+    >
       <Text style={styles.noteTitle}>{item.title}</Text>
-      <Text style={styles.noteContent}>{item.content}</Text>
-    </View>
+      <Text style={styles.noteContent} numberOfLines={3}>
+        {item.content || 'No content'}
+      </Text>
+      <View style={styles.noteFooter}>
+        <Text style={styles.noteDate}>
+          {new Date(item.updatedAt || item.createdAt).toLocaleDateString()}
+        </Text>
+        <Text style={styles.editHint}>Tap to edit</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -211,9 +229,17 @@ const HomePage = () => {
              </Text>
            </View>
          </View>
-         <TouchableOpacity onPress={handleLogout}>
-            <Text style={styles.logoutButton}>Logout</Text>
-         </TouchableOpacity>
+         <View style={styles.headerRight}>
+           <TouchableOpacity 
+             style={styles.addButton}
+             onPress={() => router.push('/note-edit?noteId=new')}
+           >
+             <Text style={styles.addButtonText}>+ New</Text>
+           </TouchableOpacity>
+           <TouchableOpacity onPress={handleLogout}>
+              <Text style={styles.logoutButton}>Logout</Text>
+           </TouchableOpacity>
+         </View>
       </View>
 
       {isLoading ? (
@@ -241,11 +267,41 @@ const styles = StyleSheet.create({
   syncStatus: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   syncStatusText: { fontSize: 12, color: '#9CA3AF' }, // text-gray-400
-  logoutButton: { fontSize: 16, color: '#3B82F6' }, // text-blue-500
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  addButton: { 
+    backgroundColor: '#3B82F6', 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 6,
+    marginRight: 12
+  },
+  addButtonText: { color: 'white', fontWeight: '600', fontSize: 14 },
+  logoutButton: { fontSize: 16, color: '#EF4444' }, // text-red-500
   listContainer: { paddingHorizontal: 16, paddingTop: 8 },
-  noteCard: { backgroundColor: '#1F2937', padding: 16, borderRadius: 8, marginBottom: 12 }, // bg-gray-800
-  noteTitle: { fontSize: 18, fontWeight: 'bold', color: 'white' },
-  noteContent: { fontSize: 14, color: '#D1D5DB', marginTop: 4 }, // text-gray-300
+  noteCard: { 
+    backgroundColor: '#1F2937', 
+    padding: 16, 
+    borderRadius: 8, 
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  noteTitle: { fontSize: 18, fontWeight: 'bold', color: 'white', marginBottom: 4 },
+  noteContent: { fontSize: 14, color: '#D1D5DB', lineHeight: 20, marginBottom: 8 },
+  noteFooter: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#374151'
+  },
+  noteDate: { fontSize: 12, color: '#6B7280' },
+  editHint: { fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' },
   emptyText: { color: '#9CA3AF', textAlign: 'center', marginTop: 50 }, // text-gray-400
 });
 

@@ -304,6 +304,50 @@ class InMemoryStorage {
       console.error('❌ Failed to clear old data:', error);
     }
   }
+
+  // Sync queue item management methods
+  async markSyncItemCompleted(itemId) {
+    try {
+      // Remove the sync item from queue by index (itemId is the index)
+      if (itemId < this.syncQueue.length) {
+        this.syncQueue.splice(itemId, 1);
+        console.log('✅ Sync item marked as completed and removed:', itemId);
+      }
+    } catch (error) {
+      console.error('❌ Failed to mark sync item as completed:', error);
+    }
+  }
+
+  async markSyncItemFailed(itemId, retryCount) {
+    try {
+      // Update retry count for the sync item
+      if (itemId < this.syncQueue.length) {
+        this.syncQueue[itemId].retry_count = (retryCount || 0) + 1;
+        this.syncQueue[itemId].lastAttempt = Date.now();
+        console.log(`❌ Sync item marked as failed (retry ${this.syncQueue[itemId].retry_count}):`, itemId);
+      }
+    } catch (error) {
+      console.error('❌ Failed to mark sync item as failed:', error);
+    }
+  }
+
+  // Additional method for getting sync queue items with proper structure
+  async getSyncQueueItems() {
+    try {
+      return this.syncQueue.map((item, index) => ({
+        id: index,
+        operation_type: item.operation, // Map 'operation' to 'operation_type'
+        data: item.data ? JSON.stringify(item.data) : null,
+        note_id: item.noteId, // Map 'noteId' to 'note_id'
+        timestamp: item.timestamp,
+        retry_count: item.retry_count || 0,
+        lastAttempt: item.lastAttempt || item.timestamp
+      }));
+    } catch (error) {
+      console.error('❌ Failed to get sync queue items:', error);
+      return [];
+    }
+  }
 }
 
 // Export singleton instance

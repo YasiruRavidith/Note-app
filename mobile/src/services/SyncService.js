@@ -431,11 +431,11 @@ class SyncService {
   }
 
   async processSyncQueue() {
-    const queueItems = await inMemoryStorage.getSyncQueue();
+    const queueItems = await inMemoryStorage.getSyncQueueItems();
     
     for (const item of queueItems) {
       try {
-        const data = JSON.parse(item.data);
+        const data = item.data ? JSON.parse(item.data) : {};
         
         switch (item.operation_type) {
           case 'create':
@@ -466,7 +466,7 @@ class SyncService {
         console.log(`✅ Synced ${item.operation_type} operation for note ${item.note_id}`);
         
       } catch (error) {
-        console.error(`❌ Failed to sync ${item.operation_type} operation:`, error);
+        console.error(`❌ Failed to sync ${item.operation_type || 'undefined'} operation:`, error);
         await inMemoryStorage.markSyncItemFailed(item.id, item.retry_count);
       }
     }
